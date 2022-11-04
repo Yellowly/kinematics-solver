@@ -17,20 +17,20 @@ enum Msg{
 }
 
 struct MainComponent{
-    inputs: Vec<f64>
+    inputs: Vec<String>
 }
 impl Component for MainComponent{
     type Message = Msg;
     type Properties = ();
 
     fn create(ctx: &Context<Self>) -> Self {
-        Self{inputs: vec![0.0; 5]}
+        Self{inputs: vec!["".to_string(); 5]}
     }
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool{
         match msg{
             Msg::Input(content, idx) => {
-                self.inputs[idx as usize]=content.parse::<f64>().unwrap_or(0.0);
+                self.inputs[idx as usize]=content;
                 false
             }
             Msg::Enter => {
@@ -70,6 +70,36 @@ impl Component for MainComponent{
                     </div>
                 </div>
             </>
+        }
+    }
+}
+
+#[derive(Clone)]
+struct KinemEquatSolvr{
+    vi: f64,
+    vf: f64,
+    acc: f64,
+    time: f64,
+    dx: f64,
+    work: Vec<String>,
+}
+impl KinemEquatSolvr{
+    fn fromarr(vals: [String; 5]) -> Result<KinemEquatSolvr, String>{
+        let mut unknowns: u8 = 0;
+        for v in vals{
+            if v==""{unknowns+=1};
+        }
+        if unknowns!=2{
+            return Result::Err("Must have exactally 2 unknown values to solve!".to_string())
+        }
+        let mut temp: KinemEquatSolvr = Self{vi: f64::NAN, vf: 0.0, acc: 0.0, time: 0.0, dx: 0.0, work:Vec::new()};
+
+        Result::Ok(temp)
+    }
+    fn solveacc(&mut self){
+        match f64::NAN{
+            vi => {}
+            _ => {}
         }
     }
 }

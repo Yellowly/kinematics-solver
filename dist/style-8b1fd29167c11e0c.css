@@ -4,6 +4,7 @@ body{
 
 .maintextcolor{
     color: #dddddd;
+    font-family: Arial;
 }
 
 .bgcol1{
@@ -46,6 +47,7 @@ body{
     padding: 5%;
     display: inline-block;
     vertical-align: middle;
+    font-family: Arial;
 }
 
 input{
