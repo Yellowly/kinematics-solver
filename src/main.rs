@@ -81,10 +81,11 @@ struct KinemEquatSolvr{
     acc: f64,
     time: f64,
     dx: f64,
+    secans: Option<Vec<f64>>,
     work: Vec<String>,
 }
 impl KinemEquatSolvr{
-    fn fromarr(vals: [String; 5]) -> Result<KinemEquatSolvr, String>{
+    fn fromarr(vals: &[String; 5]) -> Result<KinemEquatSolvr, String>{
         let mut unknowns: u8 = 0;
         for v in vals{
             if v==""{unknowns+=1};
@@ -92,15 +93,79 @@ impl KinemEquatSolvr{
         if unknowns!=2{
             return Result::Err("Must have exactally 2 unknown values to solve!".to_string())
         }
-        let mut temp: KinemEquatSolvr = Self{vi: f64::NAN, vf: 0.0, acc: 0.0, time: 0.0, dx: 0.0, work:Vec::new()};
-
+        let mut temp: KinemEquatSolvr = Self{vi: vals[0].parse::<f64>().unwrap_or(f64::NAN), vf: vals[1].parse::<f64>().unwrap_or(f64::NAN), acc: vals[2].parse::<f64>().unwrap_or(f64::NAN), time: vals[3].parse::<f64>().unwrap_or(f64::NAN), dx: vals[4].parse::<f64>().unwrap_or(f64::NAN), work:Vec::new(), secans:Option::None};
+        for i in 0..vals.len(){
+            if &vals[i]==""{
+                match i{
+                    0 => temp.solvevi(),
+                    1 => temp.solvevf(),
+                    2 => temp.solveacc(),
+                    3 => temp.solvetime(),
+                    _ => temp.solvedx()
+                }
+            }
+        }
         Result::Ok(temp)
     }
     fn solveacc(&mut self){
-        match f64::NAN{
-            vi => {}
-            _ => {}
+        if self.vi==f64::NAN {
+            self.work.push("Substitute values into Δd=v₁t-0.5at² :".to_string());
+            self.work.push(format!("{}={}*{}-0.5*a*{}*{}",self.dx,self.vf,self.time,self.time,self.time));
+            self.work.push("Solve for a :".to_string());
+            self.work.push(format!("a=({}-{}*{})/(-0.5*{}*{})",self.dx,self.vf,self.time,self.time,self.time));
+            self.acc=(self.dx-self.vf*self.time)/(-0.5*self.time*self.time);
+        }else if self.vf==f64::NAN {
+            self.work.push("Substitute values into Δd=v₀t+0.5at² :".to_string());
+            self.work.push(format!("{}={}*{}+0.5*a*{}*{}",self.dx,self.vi,self.time,self.time,self.time));
+            self.work.push("Solve for a :".to_string());
+            self.work.push(format!("a=({}-{}*{})/(0.5*{}*{})",self.dx,self.vi,self.time,self.time,self.time));
+            self.acc=(self.dx-self.vi*self.time)/(0.5*self.time*self.time);
+        }else if self.time==f64::NAN {
+            self.work.push("Substitute values into v₁²=v₀²+2aΔd :".to_string());
+            self.work.push(format!("{}*{}={}*{}+2*a*{}",self.vf,self.vf,self.vi,self.vi,self.dx));
+            self.work.push("Solve for a :".to_string());
+            self.work.push(format!("a=({}*{}-{}*{})/(2*{})",self.vf,self.vf,self.vi,self.vi,self.dx));
+            self.acc=(self.vf*self.vf-self.vi*self.vi)/(2.0*self.dx);
+        }else {
+            self.acc=(self.vf-self.vi)/self.time;
         }
     }
+    fn solvedx(&mut self){
+        if self.vi==f64::NAN{
+            self.dx=self.vf*self.time-0.5*self.acc*self.time*self.time;
+        }else if self.vf==f64::NAN{
+            self.dx=self.vi*self.time+0.5*self.acc*self.time*self.time;
+        }else{
+            self.dx=(self.vf*self.vf-self.vi*self.vi)/(2.0*self.acc);
+        }
+    }
+    fn solvetime(&mut self){
+        if self.vi==f64::NAN{
+            self.time=(-self.vf+(self.vf*self.vf+2.0*self.acc*self.dx).sqrt())/self.acc;
+            self.secans=Option::Some(vec![(-self.vf-(self.vf*self.vf+2.0*self.acc*self.dx).sqrt())/self.acc]);
+        }else if self.vf==f64::NAN{
+            self.time=(-self.vi+(self.vi*self.vi+2.0*self.acc*self.dx).sqrt())/self.acc;
+            self.secans=Option::Some(vec![(-self.vi-(self.vi*self.vi+2.0*self.acc*self.dx).sqrt())/self.acc]);
+        }else{
+            self.time=(self.vf-self.vi)/self.acc;
+        }
+    }
+    fn solvevi(&mut self){
+        if self.vf==f64::NAN{
+            self.vi=(0.5*self.acc*self.time*self.time-self.dx)/self.time;
+        }else{
+            self.vi=self.vf-self.acc*self.time;
+            if let Option::Some(ref mut vector)=self.secans{
+                vector.push(self.vf-self.acc*vector[0]);
+            }
+        }
+    }
+    fn solvevf(&mut self){
+        self.vf=self.vi+self.acc*self.time;
+        if let Option::Some(ref mut vector)=self.secans{
+            vector.push(self.vi+self.acc*vector[0]);
+        }
+    }
+
 }
 
