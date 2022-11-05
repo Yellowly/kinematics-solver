@@ -100,6 +100,7 @@ impl KinemEquatSolvr{
             if v==""{unknowns+=1};
         }
         if unknowns!=2{
+            if unknowns==0 { return Result::Err("All values are already known! Nothing to solve.".to_string())}
             return Result::Err("Must have exactally 2 unknown values to solve!".to_string())
         }
         let mut temp: KinemEquatSolvr = Self{vi: vals[0].parse::<f64>().unwrap_or(f64::NAN), vf: vals[1].parse::<f64>().unwrap_or(f64::NAN), acc: vals[2].parse::<f64>().unwrap_or(f64::NAN), time: vals[3].parse::<f64>().unwrap_or(f64::NAN), dx: vals[4].parse::<f64>().unwrap_or(f64::NAN), work:Vec::new(), secans:Option::None};
@@ -183,15 +184,20 @@ impl KinemEquatSolvr{
     }
     fn solvetime(&mut self){
         if self.vi.is_nan(){
+
             self.time=(-self.vf+(self.vf*self.vf+2.0*self.acc*self.dx).sqrt())/self.acc;
-            self.secans=Option::Some(vec![(-self.vf-(self.vf*self.vf+2.0*self.acc*self.dx).sqrt())/self.acc]);
+            let t2: f64 = (-self.vf-(self.vf*self.vf+2.0*self.acc*self.dx).sqrt())/self.acc;
+            self.secans=Option::Some(vec![t2.clone()]);
+            self.work.push(format!("t={}, {}",self.time, t2));
         }else if self.vf.is_nan(){
             self.time=(-self.vi+(self.vi*self.vi+2.0*self.acc*self.dx).sqrt())/self.acc;
-            self.secans=Option::Some(vec![(-self.vi-(self.vi*self.vi+2.0*self.acc*self.dx).sqrt())/self.acc]);
+            let t2: f64 = (-self.vi-(self.vi*self.vi+2.0*self.acc*self.dx).sqrt())/self.acc;
+            self.secans=Option::Some(vec![t2.clone()]);
+            self.work.push(format!("t={}, {}",self.time, t2));
         }else{
             self.time=(self.vf-self.vi)/self.acc;
+            self.work.push(format!("t={}",self.time));
         }
-        self.work.push(format!("t={}",self.time));
     }
     fn solvevi(&mut self){
         if self.vf.is_nan(){
@@ -217,11 +223,11 @@ impl KinemEquatSolvr{
         let mut vistr: String = self.vi.to_string();
         let mut vfstr: String = self.vf.to_string();
         if let Option::Some(ref vector)=self.secans{
-            timestr.push_str(&vector[0].to_string());
+            timestr.push_str(&format!(", {}",&vector[0].to_string()));
             if vector.len()==3{
-                vfstr.push_str(&vector[2].to_string());
+                vfstr.push_str(&format!(", {}",&vector[2].to_string()));
             }else{
-                vistr.push_str(&vector[1].to_string());
+                vistr.push_str(&format!(", {}",&vector[1].to_string()));
             }
         }
         return vec![vistr, vfstr, self.acc.to_string(), timestr,self.dx.to_string()]

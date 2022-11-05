@@ -527,7 +527,7 @@ function initSync(module) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('kinematics-solver-b2cd9bdddc5c7859_bg.wasm', import.meta.url);
+        input = new URL('kinematics-solver-26f06d1bc9259e4e_bg.wasm', import.meta.url);
     }
     const imports = getImports();
 
