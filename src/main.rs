@@ -58,24 +58,38 @@ impl Component for MainComponent{
         let link = ctx.link();
         html!{
             <>
+                <div class="title center-block">
+                    <h1 class="center-block maintextcolor">{"Budget Kinematics Solver"}</h1>
+                    <hr/>
+                </div>
                 <div class="content-grid center-block">
                     <div class="input-div maintextcolor">
+                        <div class="max-space-content bgcol1">
                         <p>{"Initial Velocity:"}</p>
-                        <input class="numfield center-block" type="text" id="vi" name="vi" value={self.inputs[0].to_string()} oninput={link.callback(|event: InputEvent| {let input: HtmlInputElement = event.target_unchecked_into(); Msg::Input(input.value(),0)})}/>
+                        <input class="center-block" type="text" id="vi" name="vi" value={self.inputs[0].to_string()} oninput={link.callback(|event: InputEvent| {let input: HtmlInputElement = event.target_unchecked_into(); Msg::Input(input.value(),0)})}/>
                         <p>{"Final Velocity:"}</p>
-                        <input class="numfield center-block" type="text" id="vf" name="vf" value={self.inputs[1].to_string()} oninput={link.callback(|event: InputEvent| {let input: HtmlInputElement = event.target_unchecked_into(); Msg::Input(input.value(),1)})}/>
+                        <input class="center-block" type="text" id="vf" name="vf" value={self.inputs[1].to_string()} oninput={link.callback(|event: InputEvent| {let input: HtmlInputElement = event.target_unchecked_into(); Msg::Input(input.value(),1)})}/>
                         <p>{"Acceleration:"}</p>
-                        <input class="numfield center-block" type="text" id="a" name="a" value={self.inputs[2].to_string()} oninput={link.callback(|event: InputEvent| {let input: HtmlInputElement = event.target_unchecked_into(); Msg::Input(input.value(),2)})}/>
+                        <input class="center-block" type="text" id="a" name="a" value={self.inputs[2].to_string()} oninput={link.callback(|event: InputEvent| {let input: HtmlInputElement = event.target_unchecked_into(); Msg::Input(input.value(),2)})}/>
                         <p>{"Time:"}</p>
-                        <input class="numfield center-block" type="text" id="t" name="t" value={self.inputs[3].to_string()} oninput={link.callback(|event: InputEvent| {let input: HtmlInputElement = event.target_unchecked_into(); Msg::Input(input.value(),3)})}/>
+                        <input class="center-block" type="text" id="t" name="t" value={self.inputs[3].to_string()} oninput={link.callback(|event: InputEvent| {let input: HtmlInputElement = event.target_unchecked_into(); Msg::Input(input.value(),3)})}/>
                         <p>{"Displacement:"}</p>
-                        <input class="numfield center-block" type="text" id="dx" name="dx" value={self.inputs[4].to_string()} oninput={link.callback(|event: InputEvent| {let input: HtmlInputElement = event.target_unchecked_into(); Msg::Input(input.value(),4)})}/>
+                        <input class="center-block" type="text" id="dx" name="dx" value={self.inputs[4].to_string()} oninput={link.callback(|event: InputEvent| {let input: HtmlInputElement = event.target_unchecked_into(); Msg::Input(input.value(),4)})}/>
                         <button class="center-block" onclick={link.callback(|_| Msg::Enter)}>{"Solve"}</button>
+                        </div>
                     </div>
                     <div class="solution-div maintextcolor">
+                        <div class="max-space-content bgcol1">
                         {self.work.iter().enumerate().map(|(i, s)| {
-                            html!{<p>{s.clone()}</p>}
+                            if s.starts_with("&"){
+                                if s.starts_with("&2"){html!{<p class="sectextcolor">{&s[2..]}</p>}}
+                                else if s.starts_with("&3"){html!{<p class="acctextcolor">{&s[2..]}</p>}}
+                                else {html!{<p class="maintextcolor">{&s[2..]}</p>}}
+                            }else{
+                                html!{<p>{s.clone()}</p>}
+                            }
                         }).collect::<Html>()}
+                        </div>
                     </div>
                 </div>
             </>
@@ -138,85 +152,111 @@ impl KinemEquatSolvr{
     }
     fn solveacc(&mut self){
         if self.vi.is_nan() {
-            self.work.push("Substitute values into Δd=v₁t-0.5at² :".to_string());
+            self.work.push("&2Substitute values into Δd=v₁t-0.5at² :".to_string());
             self.work.push(format!("{}={}*{}-0.5*a*{}*{}",self.dx,self.vf,self.time,self.time,self.time));
-            self.work.push("Solve for a :".to_string());
+            self.work.push("&2Solve for a :".to_string());
             self.work.push(format!("a=({}-{}*{})/(-0.5*{}*{})",self.dx,self.vf,self.time,self.time,self.time));
             self.acc=(self.dx-self.vf*self.time)/(-0.5*self.time*self.time);
         }else if self.vf.is_nan() {
-            self.work.push("Substitute values into Δd=v₀t+0.5at² :".to_string());
+            self.work.push("&2Substitute values into Δd=v₀t+0.5at² :".to_string());
             self.work.push(format!("{}={}*{}+0.5*a*{}*{}",self.dx,self.vi,self.time,self.time,self.time));
-            self.work.push("Solve for a :".to_string());
+            self.work.push("&2Solve for a :".to_string());
             self.work.push(format!("a=({}-{}*{})/(0.5*{}*{})",self.dx,self.vi,self.time,self.time,self.time));
             self.acc=(self.dx-self.vi*self.time)/(0.5*self.time*self.time);
         }else if self.time.is_nan() {
-            self.work.push("Substitute values into v₁²=v₀²+2aΔd :".to_string());
+            self.work.push("&2Substitute values into v₁²=v₀²+2aΔd :".to_string());
             self.work.push(format!("{}*{}={}*{}+2*a*{}",self.vf,self.vf,self.vi,self.vi,self.dx));
-            self.work.push("Solve for a :".to_string());
+            self.work.push("&2Solve for a :".to_string());
             self.work.push(format!("a=({}*{}-{}*{})/(2*{})",self.vf,self.vf,self.vi,self.vi,self.dx));
             self.acc=(self.vf*self.vf-self.vi*self.vi)/(2.0*self.dx);
         }else{
-            self.work.push("Substitute values into v₁=v₀+at :".to_string());
+            self.work.push("&2Substitute values into v₁=v₀+at :".to_string());
             self.work.push(format!("{}={}+a*{}",self.vf,self.vi,self.time));
-            self.work.push("Solve for a :".to_string());
+            self.work.push("&2Solve for a :".to_string());
             self.work.push(format!("a=({}-{})/{}",self.vf,self.vi,self.time));
             self.acc=(self.vf-self.vi)/self.time;
         }
-        self.work.push(format!("a={}",self.acc));
+        self.work.push(format!("&3a={}",self.acc));
     }
     fn solvedx(&mut self){
         if self.vi.is_nan(){
-            self.work.push("Substitute values into Δd=v₁t-0.5at² :".to_string());
+            self.work.push("&2Substitute values into Δd=v₁t-0.5at² :".to_string());
             self.work.push(format!("Δx={}*{}-0.5*{}*{}*{}",self.vf,self.time,self.acc,self.time,self.time));
             self.dx=self.vf*self.time-0.5*self.acc*self.time*self.time;
         }else if self.vf.is_nan(){
-            self.work.push("Substitute values into Δd=v₀t+0.5at² :".to_string());
+            self.work.push("&2Substitute values into Δd=v₀t+0.5at² :".to_string());
             self.work.push(format!("Δx={}*{}+0.5*{}*{}*{}",self.vf,self.time,self.acc,self.time,self.time));
             self.dx=self.vi*self.time+0.5*self.acc*self.time*self.time;
         }else{
-            self.work.push("Substitute values into v₁²=v₀²+2aΔd :".to_string());
+            self.work.push("&2Substitute values into v₁²=v₀²+2aΔd :".to_string());
             self.work.push(format!("{}*{}={}*{}+2*{}*Δd",self.vf,self.vf,self.vi,self.vi,self.acc));
-            self.work.push("Solve for Δx :".to_string());
+            self.work.push("&2Solve for Δx :".to_string());
             self.work.push(format!("Δx=({}*{}-{}*{})/(2*{})",self.vf,self.vf,self.vi,self.vi,self.acc));
             self.dx=(self.vf*self.vf-self.vi*self.vi)/(2.0*self.acc);
         }
-        self.work.push(format!("Δx={}",self.dx));
+        self.work.push(format!("&3Δx={}",self.dx));
     }
     fn solvetime(&mut self){
         if self.vi.is_nan(){
-
-            self.time=(-self.vf+(self.vf*self.vf+2.0*self.acc*self.dx).sqrt())/self.acc;
-            let t2: f64 = (-self.vf-(self.vf*self.vf+2.0*self.acc*self.dx).sqrt())/self.acc;
+            self.work.push("&2Substitute values into Δd=v₁t-0.5at² :".to_string());
+            self.work.push(format!("{}={}*t-0.5*{}*t*t",self.dx,self.vf,self.acc));
+            self.work.push("&2Solve for t using quadratic formula :".to_string());
+            self.work.push(format!("0={}t²-{}t+{}",self.acc*0.5,self.vf,self.dx));
+            self.work.push(format!("t=({}+-√({}*{}-4*{}*{}))/(2*{})",self.vf,self.vf,self.vf,self.acc*0.5,self.dx,self.acc*0.5));
+            self.time=(self.vf+(self.vf*self.vf-2.0*self.acc*self.dx).sqrt())/self.acc;
+            let t2: f64 = (self.vf-(self.vf*self.vf-2.0*self.acc*self.dx).sqrt())/self.acc;
             self.secans=Option::Some(vec![t2.clone()]);
-            self.work.push(format!("t={}, {}",self.time, t2));
+            self.work.push(format!("&3t={}, {}",self.time, t2));
         }else if self.vf.is_nan(){
+            self.work.push("&2Substitute values into Δd=v₀t+0.5at² :".to_string());
+            self.work.push(format!("{}={}*t+0.5*{}*t*t",self.dx,self.vi,self.acc));
+            self.work.push("&2Solve for t using quadratic formula :".to_string());
+            self.work.push(format!("0={}t²+{}t-{}",self.acc*0.5,self.vi,self.dx));
+            self.work.push(format!("t=(-{}+-√({}*{}+4*{}*{}))/(2*{})",self.vi,self.vi,self.vi,self.acc*0.5,self.dx,self.acc*0.5));
             self.time=(-self.vi+(self.vi*self.vi+2.0*self.acc*self.dx).sqrt())/self.acc;
             let t2: f64 = (-self.vi-(self.vi*self.vi+2.0*self.acc*self.dx).sqrt())/self.acc;
             self.secans=Option::Some(vec![t2.clone()]);
-            self.work.push(format!("t={}, {}",self.time, t2));
+            self.work.push(format!("&3t={}, {}",self.time, t2));
         }else{
+            self.work.push("&2Substitute values into v₁=v₀+at :".to_string());
+            self.work.push(format!("{}={}+{}*t",self.vf,self.vi,self.acc));
+            self.work.push("&2Solve for t :".to_string());
+            self.work.push(format!("t=({}-{})/{}",self.vf,self.vi,self.acc));
             self.time=(self.vf-self.vi)/self.acc;
-            self.work.push(format!("t={}",self.time));
+            self.work.push(format!("&3t={}",self.time));
         }
     }
     fn solvevi(&mut self){
         if self.vf.is_nan(){
+            self.work.push("&2Substitute values into Δd=v₀t+0.5at² :".to_string());
+            self.work.push(format!("{}=v₀*{}+0.5*{}*{}*{}",self.dx,self.time,self.acc,self.time,self.time));
+            self.work.push("&2Solve for v₀ :".to_string());
+            self.work.push(format!("v₀=(0.5*{}*{}*{}-{})/{}",self.acc,self.time,self.time,self.dx,self.time));
             self.vi=(0.5*self.acc*self.time*self.time-self.dx)/self.time;
+            self.work.push(format!("&3v₀={}",self.vi));
         }else{
             self.vi=self.vf-self.acc*self.time;
             if let Option::Some(ref mut vector)=self.secans{
-                vector.push(self.vf-self.acc*vector[0]);
+                let vi2: f64 = self.vf-self.acc*vector[0];
+                vector.push(vi2);
+                self.work.push(format!("&3v₀={}, {}",self.vi, vi2));
+            }else{
+                self.work.push(format!("&3v₀={}",self.vi));
             }
         }
-        self.work.push(format!("v₀={}",self.vi));
     }
     fn solvevf(&mut self){
+        self.work.push("&2Substitute values into v₁=v₀+at :".to_string());
+        self.work.push(format!("v₁={}+{}*{}",self.vi,self.acc,self.time));
         self.vf=self.vi+self.acc*self.time;
         if let Option::Some(ref mut vector)=self.secans{
             vector.push(f64::NAN);
-            vector.push(self.vi+self.acc*vector[0]);
+            let vf2 = self.vi+self.acc*vector[0];
+            vector.push(vf2);
+            self.work.push(format!("&3v₀={}, {}",self.vf, vf2));
+        }else{
+            self.work.push(format!("&3v₁={}",self.vf));
         }
-        self.work.push(format!("v₁={}",self.vf));
     }
     fn to_str_arr(&self) -> Vec<String>{
         let mut timestr: String = self.time.to_string();
